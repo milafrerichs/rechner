@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tiefenbach · Ferienwohnung Kalkulator</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --snow: #f4f1ec;
+    --pine: #1a3028;
+    --pine-mid: #2c4a3a;
+    --pine-light: #3d6b54;
+    --glacier: #6ab4c8;
+    --glacier-light: #b8dde8;
+    --rock: #5a6672;
+    --rock-light: #8a9aa6;
+    --gold: #c9943a;
+    --gold-light: #f0d5a0;
+    --warn: #d64a2a;
+    --sky: #e8f4f8;
+  }
+
+- { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+background-color: var(–snow);
+font-family: ‘DM Sans’, sans-serif;
+font-weight: 300;
+color: var(–pine);
+min-height: 100vh;
+overflow-x: hidden;
+}
+
+/* ── Mountain silhouette background ── */
+body::before {
+content: ‘’;
+position: fixed;
+bottom: 0; left: 0; right: 0;
+height: 38vh;
+background: url(“data:image/svg+xml,%3Csvg xmlns=‘http://www.w3.org/2000/svg’ viewBox=‘0 0 1440 300’%3E%3Cpath fill=’%231a3028’ fill-opacity=‘0.06’ d=‘M0,300 L0,180 L120,80 L200,130 L320,30 L440,100 L560,10 L680,90 L800,40 L920,110 L1040,20 L1160,80 L1280,50 L1380,120 L1440,80 L1440,300 Z’/%3E%3Cpath fill=’%231a3028’ fill-opacity=‘0.04’ d=‘M0,300 L0,220 L180,150 L320,180 L480,120 L620,160 L760,100 L900,150 L1060,110 L1200,160 L1320,130 L1440,150 L1440,300 Z’/%3E%3C/svg%3E”) bottom/cover no-repeat;
+pointer-events: none;
+z-index: 0;
+}
+
+.wrapper {
+position: relative;
+z-index: 1;
+max-width: 860px;
+margin: 0 auto;
+padding: 0 24px 80px;
+}
+
+/* ── Header ── */
+header {
+padding: 48px 0 32px;
+text-align: center;
+}
+
+.eyebrow {
+font-size: 11px;
+font-weight: 500;
+letter-spacing: 3px;
+text-transform: uppercase;
+color: var(–glacier);
+margin-bottom: 12px;
+}
+
+h1 {
+font-family: ‘Playfair Display’, serif;
+font-size: clamp(28px, 5vw, 44px);
+font-weight: 700;
+color: var(–pine);
+line-height: 1.1;
+margin-bottom: 10px;
+}
+
+h1 span { color: var(–glacier); }
+
+.subtitle {
+font-size: 14px;
+color: var(–rock);
+letter-spacing: 0.3px;
+}
+
+/* ── Grid layout ── */
+.grid {
+display: grid;
+grid-template-columns: 1fr 1fr;
+gap: 16px;
+margin-top: 32px;
+}
+
+@media (max-width: 640px) {
+.grid { grid-template-columns: 1fr; }
+}
+
+.card-full { grid-column: 1 / -1; }
+
+/* ── Cards ── */
+.card {
+background: white;
+border-radius: 16px;
+padding: 24px 26px;
+box-shadow: 0 2px 20px rgba(26,48,40,0.07), 0 1px 4px rgba(26,48,40,0.04);
+border: 1px solid rgba(26,48,40,0.06);
+transition: box-shadow 0.2s;
+}
+
+.card:hover {
+box-shadow: 0 4px 32px rgba(26,48,40,0.11), 0 1px 6px rgba(26,48,40,0.06);
+}
+
+.card-pine {
+background: var(–pine);
+color: var(–snow);
+border-color: transparent;
+}
+
+.card-result {
+background: linear-gradient(135deg, var(–pine) 0%, var(–pine-mid) 100%);
+color: var(–snow);
+border-color: transparent;
+}
+
+/* ── Section label ── */
+.section-label {
+font-size: 10px;
+font-weight: 500;
+letter-spacing: 2.5px;
+text-transform: uppercase;
+color: var(–rock-light);
+margin-bottom: 18px;
+display: flex;
+align-items: center;
+gap: 8px;
+}
+
+.section-label::after {
+content: ‘’;
+flex: 1;
+height: 1px;
+background: currentColor;
+opacity: 0.25;
+}
+
+.card-pine .section-label,
+.card-result .section-label {
+color: var(–glacier-light);
+opacity: 0.8;
+}
+
+/* ── Slider component ── */
+.slider-row {
+margin-bottom: 22px;
+}
+
+.slider-row:last-child { margin-bottom: 0; }
+
+.slider-header {
+display: flex;
+justify-content: space-between;
+align-items: baseline;
+margin-bottom: 10px;
+}
+
+.slider-label {
+font-size: 13px;
+font-weight: 400;
+color: var(–pine);
+display: flex;
+align-items: center;
+gap: 6px;
+}
+
+.slider-label .icon { font-size: 15px; }
+
+.slider-value {
+font-family: ‘Playfair Display’, serif;
+font-size: 22px;
+font-weight: 700;
+color: var(–pine);
+line-height: 1;
+}
+
+.slider-value .unit {
+font-family: ‘DM Sans’, sans-serif;
+font-size: 12px;
+font-weight: 400;
+color: var(–rock-light);
+margin-left: 2px;
+}
+
+.card-pine .slider-label { color: var(–glacier-light); }
+.card-pine .slider-value { color: white; }
+.card-pine .slider-value .unit { color: var(–glacier-light); }
+
+/* ── Custom range ── */
+input[type=range] {
+-webkit-appearance: none;
+width: 100%;
+height: 4px;
+border-radius: 4px;
+outline: none;
+cursor: pointer;
+transition: opacity 0.15s;
+}
+
+input[type=range]:hover { opacity: 0.92; }
+
+input[type=range].pine-track {
+background: linear-gradient(to right, var(–pine-light) 0%, var(–pine-light) var(–pct, 50%), #e0dcd4 var(–pct, 50%), #e0dcd4 100%);
+}
+
+input[type=range].glacier-track {
+background: linear-gradient(to right, var(–glacier) 0%, var(–glacier) var(–pct, 50%), rgba(255,255,255,0.2) var(–pct, 50%), rgba(255,255,255,0.2) 100%);
+}
+
+input[type=range].gold-track {
+background: linear-gradient(to right, var(–gold) 0%, var(–gold) var(–pct, 50%), #e0dcd4 var(–pct, 50%), #e0dcd4 100%);
+}
+
+input[type=range]::-webkit-slider-thumb {
+-webkit-appearance: none;
+width: 18px;
+height: 18px;
+border-radius: 50%;
+background: white;
+border: 2.5px solid var(–pine-light);
+box-shadow: 0 1px 6px rgba(0,0,0,0.18);
+transition: transform 0.1s, box-shadow 0.1s;
+}
+
+input[type=range]::-webkit-slider-thumb:hover {
+transform: scale(1.2);
+box-shadow: 0 2px 10px rgba(0,0,0,0.22);
+}
+
+.glacier-track::-webkit-slider-thumb { border-color: var(–glacier); }
+.gold-track::-webkit-slider-thumb { border-color: var(–gold); }
+
+input[type=range]::-moz-range-thumb {
+width: 18px; height: 18px;
+border-radius: 50%;
+background: white;
+border: 2.5px solid var(–pine-light);
+box-shadow: 0 1px 6px rgba(0,0,0,0.18);
+}
+
+/* ── Range ticks ── */
+.range-ticks {
+display: flex;
+justify-content: space-between;
+margin-top: 5px;
+padding: 0 2px;
+}
+
+.range-ticks span {
+font-size: 10px;
+color: var(–rock-light);
+opacity: 0.7;
+}
+
+.card-pine .range-ticks span { color: var(–glacier-light); opacity: 0.5; }
+
+/* ── Day bar visualization ── */
+.day-bar {
+display: flex;
+height: 10px;
+border-radius: 6px;
+overflow: hidden;
+margin: 20px 0 6px;
+gap: 2px;
+}
+
+.day-seg {
+border-radius: 4px;
+transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+min-width: 0;
+}
+
+.day-seg.guests   { background: var(–glacier); }
+.day-seg.workation{ background: var(–gold); }
+.day-seg.own      { background: var(–pine-light); }
+.day-seg.empty    { background: #e5e1d8; }
+
+.day-legend {
+display: flex;
+flex-wrap: wrap;
+gap: 14px;
+margin-top: 8px;
+}
+
+.legend-item {
+display: flex;
+align-items: center;
+gap: 6px;
+font-size: 11px;
+color: var(–rock);
+}
+
+.legend-dot {
+width: 9px; height: 9px;
+border-radius: 50%;
+flex-shrink: 0;
+}
+
+/* ── Conflict warning ── */
+.conflict-warn {
+display: none;
+background: rgba(214, 74, 42, 0.08);
+border: 1px solid rgba(214, 74, 42, 0.25);
+border-radius: 10px;
+padding: 10px 14px;
+font-size: 12px;
+color: var(–warn);
+margin-top: 14px;
+align-items: center;
+gap: 8px;
+}
+
+.conflict-warn.show { display: flex; }
+
+/* ── Results ── */
+.result-grid {
+display: grid;
+grid-template-columns: 1fr 1fr;
+gap: 14px;
+margin-top: 4px;
+}
+
+.result-item {
+background: rgba(255,255,255,0.07);
+border-radius: 10px;
+padding: 14px 16px;
+border: 1px solid rgba(255,255,255,0.1);
+}
+
+.result-item.highlight {
+background: rgba(106, 180, 200, 0.18);
+border-color: rgba(106, 180, 200, 0.35);
+grid-column: 1 / -1;
+}
+
+.result-item.warn-item {
+background: rgba(214, 74, 42, 0.15);
+border-color: rgba(214, 74, 42, 0.3);
+}
+
+.result-label {
+font-size: 10px;
+letter-spacing: 1.5px;
+text-transform: uppercase;
+color: var(–glacier-light);
+margin-bottom: 6px;
+opacity: 0.75;
+}
+
+.result-number {
+font-family: ‘Playfair Display’, serif;
+font-size: 28px;
+font-weight: 700;
+color: white;
+line-height: 1;
+}
+
+.result-number.big {
+font-size: 36px;
+}
+
+.result-number .suffix {
+font-family: ‘DM Sans’, sans-serif;
+font-size: 14px;
+font-weight: 300;
+color: var(–glacier-light);
+margin-left: 3px;
+}
+
+.result-sub {
+font-size: 11px;
+color: var(–glacier-light);
+margin-top: 4px;
+opacity: 0.7;
+}
+
+/* ── Rendite traffic light ── */
+.rendite-badge {
+display: inline-flex;
+align-items: center;
+gap: 6px;
+padding: 4px 10px;
+border-radius: 20px;
+font-size: 11px;
+font-weight: 500;
+margin-top: 8px;
+transition: background 0.3s, color 0.3s;
+}
+
+/* ── Assumptions card ── */
+.assumption-row {
+display: flex;
+justify-content: space-between;
+align-items: center;
+padding: 9px 0;
+border-bottom: 1px solid rgba(26,48,40,0.07);
+font-size: 13px;
+}
+
+.assumption-row:last-child { border-bottom: none; }
+
+.assumption-row .key { color: var(–rock); }
+
+.assumption-row .val {
+font-weight: 500;
+color: var(–pine);
+display: flex;
+align-items: center;
+gap: 6px;
+}
+
+.val-input {
+background: var(–sky);
+border: 1px solid var(–glacier-light);
+border-radius: 6px;
+padding: 3px 8px;
+width: 80px;
+font-family: ‘DM Sans’, sans-serif;
+font-size: 13px;
+font-weight: 500;
+color: var(–pine);
+text-align: right;
+outline: none;
+transition: border-color 0.2s;
+}
+
+.val-input:focus { border-color: var(–glacier); }
+
+/* ── Footer note ── */
+.footnote {
+text-align: center;
+font-size: 11px;
+color: var(–rock-light);
+margin-top: 40px;
+line-height: 1.8;
+}
+
+.footnote a { color: var(–glacier); text-decoration: none; }
+
+/* ── Animations ── */
+@keyframes fadeUp {
+from { opacity: 0; transform: translateY(16px); }
+to   { opacity: 1; transform: translateY(0); }
+}
+
+.card { animation: fadeUp 0.5s ease both; }
+.card:nth-child(1) { animation-delay: 0.05s; }
+.card:nth-child(2) { animation-delay: 0.12s; }
+.card:nth-child(3) { animation-delay: 0.18s; }
+.card:nth-child(4) { animation-delay: 0.24s; }
+.card:nth-child(5) { animation-delay: 0.30s; }
+</style>
+
+</head>
+<body>
+<div class="wrapper">
+
+  <header>
+    <div class="eyebrow">🏔 Tiefenbach · Oberstdorf · 25 m²</div>
+    <h1>Ferienwohnung<br><span>Rentabilitäts&shy;rechner</span></h1>
+    <p class="subtitle">Kaufpreis 135.000 € · Workation & Touristenvermietung</p>
+  </header>
+
+  <!-- Day bar overview -->
+
+  <div class="card card-full">
+    <div class="section-label">Jahresübersicht · 365 Tage</div>
+    <div class="day-bar">
+      <div class="day-seg guests"    id="bar-guests"></div>
+      <div class="day-seg workation" id="bar-workation"></div>
+      <div class="day-seg own"       id="bar-own"></div>
+      <div class="day-seg empty"     id="bar-empty"></div>
+    </div>
+    <div class="day-legend">
+      <div class="legend-item"><div class="legend-dot" style="background:var(--glacier)"></div>Gäste (<span id="leg-guests">—</span> Tage)</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--gold)"></div>Workation (<span id="leg-work">—</span> Tage)</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--pine-light)"></div>Eigennutzung (<span id="leg-own">—</span> Tage)</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#e5e1d8"></div>Leerstand (<span id="leg-empty">—</span> Tage)</div>
+    </div>
+
+```
+<div class="conflict-warn" id="conflict-warn">
+  ⚠️ <span id="conflict-text">Belegung übersteigt 365 Tage – bitte Schieberegler anpassen.</span>
+</div>
+```
+
+  </div>
+
+  <div class="grid">
+
+```
+<!-- Slider Card 1: Belegungsquote -->
+<div class="card card-full">
+  <div class="section-label">Belegungsquote · Gesamtvermietung</div>
+  <div class="slider-row">
+    <div class="slider-header">
+      <span class="slider-label"><span class="icon">📊</span> Belegungsquote Gäste</span>
+      <span class="slider-value"><span id="val-quote">55</span><span class="unit">%</span></span>
+    </div>
+    <input type="range" id="sl-quote" class="pine-track" min="30" max="80" value="55" step="1">
+    <div class="range-ticks"><span>30%</span><span>50%</span><span>65%</span><span>80%</span></div>
+  </div>
+  <div class="slider-row">
+    <div class="slider-header">
+      <span class="slider-label" style="color:var(--rock-light); font-size:12px">↳ entspricht</span>
+      <span class="slider-value" style="font-size:18px"><span id="val-guest-days">—</span><span class="unit"> Tage / Jahr</span></span>
+    </div>
+  </div>
+</div>
+
+<!-- Slider Card 2: Eigennutzung -->
+<div class="card card-pine">
+  <div class="section-label">Eigennutzung</div>
+
+  <div class="slider-row">
+    <div class="slider-header">
+      <span class="slider-label"><span class="icon">💻</span> Workation</span>
+      <span class="slider-value"><span id="val-work">30</span><span class="unit"> Tage</span></span>
+    </div>
+    <input type="range" id="sl-work" class="glacier-track" min="0" max="120" value="30" step="1">
+    <div class="range-ticks"><span>0</span><span>30</span><span>60</span><span>90</span><span>120</span></div>
+  </div>
+
+  <div class="slider-row">
+    <div class="slider-header">
+      <span class="slider-label"><span class="icon">🏡</span> Urlaub / Freizeit</span>
+      <span class="slider-value"><span id="val-own">20</span><span class="unit"> Tage</span></span>
+    </div>
+    <input type="range" id="sl-own" class="glacier-track" min="0" max="90" value="20" step="1">
+    <div class="range-ticks"><span>0</span><span>20</span><span>45</span><span>90</span></div>
+  </div>
+
+  <div class="slider-row">
+    <div class="slider-header">
+      <span class="slider-label" style="font-size:11px; opacity:0.7">Eigennutzung gesamt</span>
+      <span class="slider-value" style="font-size:16px"><span id="val-own-total">—</span><span class="unit"> Tage</span></span>
+    </div>
+  </div>
+</div>
+
+<!-- Slider Card 3: Preise -->
+<div class="card">
+  <div class="section-label">Nachtpreise</div>
+
+  <div class="slider-row">
+    <div class="slider-header">
+      <span class="slider-label"><span class="icon">❄️</span> Hochsaison</span>
+      <span class="slider-value"><span id="val-price-hi">90</span><span class="unit"> €</span></span>
+    </div>
+    <input type="range" id="sl-price-hi" class="gold-track" min="60" max="140" value="90" step="5">
+    <div class="range-ticks"><span>60€</span><span>90€</span><span>140€</span></div>
+  </div>
+
+  <div class="slider-row">
+    <div class="slider-header">
+      <span class="slider-label"><span class="icon">☀️</span> Nebensaison</span>
+      <span class="slider-value"><span id="val-price-lo">70</span><span class="unit"> €</span></span>
+    </div>
+    <input type="range" id="sl-price-lo" class="gold-track" min="40" max="110" value="70" step="5">
+    <div class="range-ticks"><span>40€</span><span>70€</span><span>110€</span></div>
+  </div>
+
+  <div class="assumption-row" style="margin-top:8px">
+    <span class="key">Ø Nachtpreis (berechnet)</span>
+    <span class="val" id="val-avg-price" style="color:var(--gold)">—</span>
+  </div>
+</div>
+
+<!-- Assumptions mini card -->
+<div class="card">
+  <div class="section-label">Fixe Annahmen</div>
+
+  <div class="assumption-row">
+    <span class="key">Kaufpreis</span>
+    <span class="val">135.000 €</span>
+  </div>
+  <div class="assumption-row">
+    <span class="key">Plattformgebühr</span>
+    <span class="val"><input class="val-input" id="inp-platform" type="number" value="15" min="5" max="25"> %</span>
+  </div>
+  <div class="assumption-row">
+    <span class="key">Reinigung / Buchung</span>
+    <span class="val"><input class="val-input" id="inp-cleaning" type="number" value="60" min="0" max="150"> €</span>
+  </div>
+  <div class="assumption-row">
+    <span class="key">Laufende Kosten / Jahr</span>
+    <span class="val"><input class="val-input" id="inp-fixed" type="number" value="4400" min="0" max="12000"> €</span>
+  </div>
+  <div class="assumption-row">
+    <span class="key">Saison-Split (Hoch/Neben)</span>
+    <span class="val"><input class="val-input" id="inp-hisplit" type="number" value="40" min="10" max="70"> %</span>
+  </div>
+</div>
+
+<!-- Results card -->
+<div class="card card-result card-full">
+  <div class="section-label">Ergebnis · pro Jahr</div>
+  <div class="result-grid">
+    <div class="result-item">
+      <div class="result-label">Brutto-Einnahmen</div>
+      <div class="result-number"><span id="res-gross">—</span><span class="suffix">€</span></div>
+      <div class="result-sub"><span id="res-guest-days-r">—</span> Vermietungstage</div>
+    </div>
+    <div class="result-item">
+      <div class="result-label">Gesamtkosten</div>
+      <div class="result-number"><span id="res-costs">—</span><span class="suffix">€</span></div>
+      <div class="result-sub">Plattform + Reinigung + Fix</div>
+    </div>
+    <div class="result-item highlight">
+      <div class="result-label">Jahresüberschuss (vor Steuer)</div>
+      <div class="result-number big"><span id="res-net">—</span><span class="suffix">€</span></div>
+      <div>
+        <div class="rendite-badge" id="rendite-badge">
+          <span id="rendite-dot">●</span>
+          <span id="res-yield">—</span> Rendite · <span id="res-amort">—</span> Jahre Amortisation
+        </div>
+      </div>
+    </div>
+    <div class="result-item">
+      <div class="result-label">Plattformgebühren</div>
+      <div class="result-number"><span id="res-platform">—</span><span class="suffix">€</span></div>
+    </div>
+    <div class="result-item">
+      <div class="result-label">Reinigungskosten</div>
+      <div class="result-number"><span id="res-clean">—</span><span class="suffix">€</span></div>
+      <div class="result-sub">ca. <span id="res-bookings">—</span> Buchungen/Jahr</div>
+    </div>
+  </div>
+</div>
+```
+
+  </div><!-- /grid -->
+
+  <p class="footnote">
+    Alle Werte sind Schätzungen für Planungszwecke · Steuerliche Auswirkungen nicht berücksichtigt<br>
+    Eigennutzung (Workation + Urlaub) mindert den steuerlichen Werbungskostenabzug anteilig → Steuerberater empfohlen
+  </p>
+
+</div><!-- /wrapper -->
+
+<script>
+const KAUFPREIS = 135000;
+const TOTAL_DAYS = 365;
+const AVG_STAY = 5; // Ø Aufenthaltsdauer in Tagen
+
+function el(id) { return document.getElementById(id); }
+
+function fmt(n, decimals=0) {
+  if (!isFinite(n) || isNaN(n)) return '—';
+  return n.toLocaleString('de-DE', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+}
+
+function updateSliderTrack(input) {
+  const min = +input.min, max = +input.max, val = +input.value;
+  const pct = ((val - min) / (max - min)) * 100;
+  input.style.setProperty('--pct', pct + '%');
+  input.style.background = input.style.background.replace(/[\d.]+%/, pct + '%') || '';
+  // Force re-paint via CSS variable on input itself
+  input.style.backgroundImage = `linear-gradient(to right, currentColor 0%, currentColor ${pct}%, transparent ${pct}%)`;
+}
+
+function setTrack(input, color1, color2) {
+  const min = +input.min, max = +input.max, val = +input.value;
+  const pct = ((val - min) / (max - min)) * 100;
+  input.style.background = `linear-gradient(to right, ${color1} 0%, ${color1} ${pct}%, ${color2} ${pct}%, ${color2} 100%)`;
+}
+
+function calc() {
+  const quote     = +el('sl-quote').value / 100;
+  const workDays  = +el('sl-work').value;
+  const ownDays   = +el('sl-own').value;
+  const priceHi   = +el('sl-price-hi').value;
+  const priceLo   = +el('sl-price-lo').value;
+  const platform  = +el('inp-platform').value / 100;
+  const cleaning  = +el('inp-cleaning').value;
+  const fixedCost = +el('inp-fixed').value;
+  const hiSplit   = +el('inp-hisplit').value / 100;
+
+  const guestDays   = Math.round(quote * TOTAL_DAYS);
+  const ownTotal    = workDays + ownDays;
+  const emptyDays   = Math.max(0, TOTAL_DAYS - guestDays - ownTotal);
+  const totalUsed   = guestDays + ownTotal;
+  const overbooked  = totalUsed > TOTAL_DAYS;
+
+  // Display values
+  el('val-quote').textContent       = Math.round(quote * 100);
+  el('val-guest-days').textContent  = guestDays;
+  el('val-work').textContent        = workDays;
+  el('val-own').textContent         = ownDays;
+  el('val-own-total').textContent   = ownTotal;
+
+  // Avg price
+  const avgPrice = priceHi * hiSplit + priceLo * (1 - hiSplit);
+  el('val-avg-price').textContent = fmt(avgPrice, 0) + ' €';
+
+  // Day bar
+  const g  = Math.min(guestDays, TOTAL_DAYS);
+  const w  = Math.min(ownTotal, TOTAL_DAYS - g);
+  const e  = Math.max(0, TOTAL_DAYS - g - w);
+  el('bar-guests').style.width    = (g / TOTAL_DAYS * 100) + '%';
+  el('bar-workation').style.width = (workDays / TOTAL_DAYS * 100) + '%';
+  el('bar-own').style.width       = (ownDays / TOTAL_DAYS * 100) + '%';
+  el('bar-empty').style.width     = (e / TOTAL_DAYS * 100) + '%';
+
+  el('leg-guests').textContent  = g;
+  el('leg-work').textContent    = workDays;
+  el('leg-own').textContent     = ownDays;
+  el('leg-empty').textContent   = e;
+
+  // Conflict warning
+  const warn = el('conflict-warn');
+  if (overbooked) {
+    const over = totalUsed - TOTAL_DAYS;
+    el('conflict-text').textContent = `Belegung übersteigt 365 Tage um ${over} Tage – bitte Schieberegler anpassen.`;
+    warn.classList.add('show');
+  } else {
+    warn.classList.remove('show');
+  }
+
+  // Financials
+  const hiDays     = Math.round(guestDays * hiSplit);
+  const loDays     = guestDays - hiDays;
+  const gross      = hiDays * priceHi + loDays * priceLo;
+  const bookings   = Math.round(guestDays / AVG_STAY);
+  const platformCost = gross * platform;
+  const cleanCost  = bookings * cleaning;
+  const totalCosts = platformCost + cleanCost + fixedCost;
+  const net        = gross - totalCosts;
+  const yield_pct  = net / KAUFPREIS;
+  const amort      = net > 0 ? KAUFPREIS / net : Infinity;
+
+  el('res-gross').textContent      = fmt(gross);
+  el('res-guest-days-r').textContent = guestDays;
+  el('res-costs').textContent      = fmt(totalCosts);
+  el('res-net').textContent        = net >= 0 ? fmt(net) : '−' + fmt(Math.abs(net));
+  el('res-platform').textContent   = fmt(platformCost);
+  el('res-clean').textContent      = fmt(cleanCost);
+  el('res-bookings').textContent   = bookings;
+  el('res-yield').textContent      = fmt(yield_pct * 100, 1) + '%';
+  el('res-amort').textContent      = isFinite(amort) ? fmt(amort, 0) : '∞';
+
+  // Rendite badge color
+  const badge = el('rendite-badge');
+  badge.style.removeProperty('background');
+  badge.style.removeProperty('color');
+  if (net < 0) {
+    badge.style.background = 'rgba(214,74,42,0.25)';
+    badge.style.color = '#ff9980';
+    el('rendite-dot').textContent = '●';
+  } else if (yield_pct < 0.02) {
+    badge.style.background = 'rgba(201,148,58,0.25)';
+    badge.style.color = '#f0d5a0';
+    el('rendite-dot').textContent = '●';
+  } else if (yield_pct < 0.035) {
+    badge.style.background = 'rgba(106,180,200,0.25)';
+    badge.style.color = '#b8dde8';
+    el('rendite-dot').textContent = '●';
+  } else {
+    badge.style.background = 'rgba(61,107,84,0.35)';
+    badge.style.color = '#a7f3d0';
+    el('rendite-dot').textContent = '●';
+  }
+
+  // Net result item color
+  const hiItem = document.querySelector('.result-item.highlight');
+  if (net < 0) {
+    hiItem.style.background = 'rgba(214,74,42,0.18)';
+    hiItem.style.borderColor = 'rgba(214,74,42,0.35)';
+  } else {
+    hiItem.style.background = '';
+    hiItem.style.borderColor = '';
+  }
+}
+
+function hookSlider(id, colorOn, colorOff) {
+  const s = el(id);
+  function update() {
+    const min = +s.min, max = +s.max, val = +s.value;
+    const pct = ((val - min) / (max - min)) * 100;
+    s.style.background = `linear-gradient(to right, ${colorOn} 0%, ${colorOn} ${pct}%, ${colorOff} ${pct}%, ${colorOff} 100%)`;
+    calc();
+  }
+  s.addEventListener('input', update);
+  update();
+}
+
+hookSlider('sl-quote',    '#3d6b54', '#e0dcd4');
+hookSlider('sl-work',     '#6ab4c8', 'rgba(255,255,255,0.18)');
+hookSlider('sl-own',      '#6ab4c8', 'rgba(255,255,255,0.18)');
+hookSlider('sl-price-hi', '#c9943a', '#e0dcd4');
+hookSlider('sl-price-lo', '#c9943a', '#e0dcd4');
+
+['inp-platform','inp-cleaning','inp-fixed','inp-hisplit'].forEach(id => {
+  el(id).addEventListener('input', calc);
+});
+
+calc();
+</script>
+
+</body>
+</html>
