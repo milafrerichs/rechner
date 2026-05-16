@@ -450,7 +450,7 @@ input[type=range]::-moz-range-thumb {
   <header>
     <div class="eyebrow">🏔 Tiefenbach · Oberstdorf · 25 m²</div>
     <h1>Ferienwohnung<br><span>Rentabilitäts&shy;rechner</span></h1>
-    <p class="subtitle">Kaufpreis 135.000 € · Workation & Touristenvermietung</p>
+    <p class="subtitle">Kaufpreis <span id="header-kaufpreis">135.000 €</span> · Workation & Touristenvermietung</p>
   </header>
 
   <!-- Day bar overview -->
@@ -590,9 +590,18 @@ input[type=range]::-moz-range-thumb {
     <div class="card">
       <div class="section-label">Fixe Annahmen</div>
       <div class="assumption-row">
-        <span class="key">Kaufpreis</span>
-        <span class="val">135.000 €</span>
-      </div>
+  <span class="key">Kaufpreis</span>
+  <span class="val">
+    <input
+      class="val-input"
+      id="inp-kaufpreis"
+      type="number"
+      value="135000"
+      min="10000"
+      step="1000"
+    > €
+  </span>
+</div>
       <div class="assumption-row">
         <span class="key">Plattformgebühr</span>
         <span class="val"><input class="val-input" id="inp-platform" type="number" value="15" min="5" max="25"> %</span>
@@ -627,6 +636,66 @@ input[type=range]::-moz-range-thumb {
         Bemessungsgrundlage bitte mit der Gemeinde Tiefenbach abklären.
       </p>
     </div>
+    <!-- Bergbahnen Unlimited -->
+<div class="card">
+  <div class="section-label">🚠 Bergbahnen unlimited</div>
+
+  <div class="assumption-row">
+    <span class="key">Fixpreis / Jahr</span>
+    <span class="val">280 €</span>
+  </div>
+
+  <div class="assumption-row">
+    <span class="key">Preis pro Gast & Übernachtung</span>
+    <span class="val">
+      <input
+        class="val-input"
+        id="inp-bergbahn-rate"
+        type="number"
+        value="5"
+        min="0"
+        max="20"
+        step="0.5"
+      > €
+    </span>
+  </div>
+  <div class="assumption-row">
+
+  <span class="key">Ø Gäste pro Nacht</span>
+
+  <span class="val">
+
+    <input
+
+      class="val-input"
+
+      id="inp-avg-guests"
+
+      type="number"
+
+      value="2"
+
+      min="1"
+
+      max="8"
+
+      step="0.5"
+
+    >
+
+  </span
+
+  <div class="assumption-row"
+       style="border-top:1px solid rgba(26,48,40,0.1); margin-top:4px; padding-top:12px">
+    <span class="key" style="font-weight:500">
+      Kosten / Jahr
+    </span>
+    <span class="val" id="res-bergbahn"
+          style="color:var(--gold)">
+      —
+    </span>
+  </div>
+</div>
 
     <!-- Tilgung card -->
     <div class="card">
@@ -704,7 +773,18 @@ input[type=range]::-moz-range-thumb {
           <div class="result-number"><span id="res-clean">—</span><span class="suffix">€</span></div>
           <div class="result-sub">ca. <span id="res-bookings">—</span> Buchungen/Jahr</div>
         </div>
+        <div class="result-item">
+  <div class="result-label">Bergbahnen unlimited</div>
+  <div class="result-number">
+    <span id="res-bergbahn-r">—</span>
+    <span class="suffix">€</span>
+  </div>
+  <div class="result-sub">
+    280 € Fix + Gästeübernachtungen
+  </div>
+</div>
       </div>
+      
     </div>
 
   </div><!-- /grid -->
@@ -717,15 +797,21 @@ input[type=range]::-moz-range-thumb {
 </div><!-- /wrapper -->
 
 <script>
-const KAUFPREIS  = 135000;
+const DEFAULT_KAUFPREIS = 135000;
 const TOTAL_DAYS = 365;
-const AVG_STAY   = 5; // Ø Aufenthaltsdauer in Tagen
+const AVG_STAY = 5; // Ø Aufenthaltsdauer in Tagen
 
-function el(id) { return document.getElementById(id); }
+function el(id) {
+  return document.getElementById(id);
+}
 
 function fmt(n, decimals = 0) {
   if (!isFinite(n) || isNaN(n)) return '—';
-  return n.toLocaleString('de-DE', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+
+  return n.toLocaleString('de-DE', {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals
+  });
 }
 
 function fmtEur(n) {
@@ -733,189 +819,568 @@ function fmtEur(n) {
 }
 
 function setTrack(input, colorOn, colorOff) {
-  const min = +input.min, max = +input.max, val = +input.value;
+  const min = +input.min;
+  const max = +input.max;
+  const val = +input.value;
+
   const pct = ((val - min) / (max - min)) * 100;
-  input.style.background = `linear-gradient(to right, ${colorOn} 0%, ${colorOn} ${pct}%, ${colorOff} ${pct}%, ${colorOff} 100%)`;
+
+  input.style.background =
+    `linear-gradient(
+      to right,
+      ${colorOn} 0%,
+      ${colorOn} ${pct}%,
+      ${colorOff} ${pct}%,
+      ${colorOff} 100%
+    )`;
 }
 
 function calc() {
-  // ── Inputs ──
-  const quoteHi    = +el('sl-quote-hi').value / 100;   // Belegung Hochsaison
-  const quoteLo    = +el('sl-quote-lo').value / 100;   // Belegung Nebensaison
-  const workDays   = +el('sl-work').value;
-  const ownDays    = +el('sl-own').value;
-  const priceHi    = +el('sl-price-hi').value;
-  const priceLo    = +el('sl-price-lo').value;
-  const hiDaysAvail= +el('sl-hi-days').value;
-  const platform   = +el('inp-platform').value / 100;
-  const cleaning   = +el('inp-cleaning').value;
-  const fixedCost  = +el('inp-fixed').value;
+
+  // ─────────────────────────────
+  // INPUTS
+  // ─────────────────────────────
+  const kaufpreis =
+    +el('inp-kaufpreis')?.value ||
+    DEFAULT_KAUFPREIS;
+
+  const quoteHi =
+    +el('sl-quote-hi').value / 100;
+
+  const quoteLo =
+    +el('sl-quote-lo').value / 100;
+
+  const workDays =
+    +el('sl-work').value;
+
+  const ownDays =
+    +el('sl-own').value;
+
+  const priceHi =
+    +el('sl-price-hi').value;
+
+  const priceLo =
+    +el('sl-price-lo').value;
+
+  const hiDaysAvail =
+    +el('sl-hi-days').value;
+
+  const platform =
+    +el('inp-platform').value / 100;
+
+  const cleaning =
+    +el('inp-cleaning').value;
+
+  const fixedCost =
+    +el('inp-fixed').value;
+
+  // Bergbahnen unlimited
+  const bergbahnRate =
+    +el('inp-bergbahn-rate')?.value || 0;
+
+  const avgGuests =
+    +el('inp-avg-guests')?.value || 2;
 
   // Zweitwohnsitzsteuer
-  const zwstRate   = +el('inp-zwst-rate').value / 100;
-  const zwstBase   = +el('inp-zwst-base').value;
+  const zwstRate =
+    +el('inp-zwst-rate').value / 100;
 
-  // Tilgung / Finanzierung
-  const finanzPct  = +el('inp-finanz-pct').value / 100;
-  const zinsSatz   = +el('inp-zins').value / 100;
-  const tilgSatz   = +el('inp-tilgung').value / 100;
+  const zwstBase =
+    +el('inp-zwst-base').value;
 
-  // ── Saison-Tage ──
-  const loDaysAvail  = Math.max(0, TOTAL_DAYS - hiDaysAvail);
-  const hiDaysRented = Math.round(quoteHi * hiDaysAvail);
-  const loDaysRented = Math.round(quoteLo * loDaysAvail);
-  const guestDays    = hiDaysRented + loDaysRented;
+  // Finanzierung
+  const finanzPct =
+    +el('inp-finanz-pct').value / 100;
 
-  const ownTotal   = workDays + ownDays;
-  const totalUsed  = guestDays + ownTotal;
-  const overbooked = totalUsed > TOTAL_DAYS;
+  const zinsSatz =
+    +el('inp-zins').value / 100;
 
-  // Ø Belegung gesamt
-  const avgQuote = TOTAL_DAYS > 0 ? guestDays / TOTAL_DAYS : 0;
+  const tilgSatz =
+    +el('inp-tilgung').value / 100;
 
-  // ── Anzeige Slider-Werte ──
-  el('val-quote-hi').textContent    = Math.round(quoteHi * 100);
-  el('val-quote-lo').textContent    = Math.round(quoteLo * 100);
-  el('val-guest-days-hi').textContent = hiDaysRented;
-  el('val-guest-days-lo').textContent = loDaysRented;
-  el('val-guest-days').textContent  = guestDays;
-  el('val-quote').textContent       = Math.round(avgQuote * 100);
+  // ─────────────────────────────
+  // SAISON-TAGE
+  // ─────────────────────────────
+  const loDaysAvail =
+    Math.max(0, TOTAL_DAYS - hiDaysAvail);
 
-  el('val-price-hi').textContent    = priceHi;
-  el('val-price-lo').textContent    = priceLo;
-  el('val-hi-days').textContent     = hiDaysAvail;
-  el('val-lo-days').textContent     = loDaysAvail + ' Tage';
+  const hiDaysRented =
+    Math.round(quoteHi * hiDaysAvail);
 
-  el('val-work').textContent        = workDays;
-  el('val-own').textContent         = ownDays;
-  el('val-own-total').textContent   = ownTotal;
+  const loDaysRented =
+    Math.round(quoteLo * loDaysAvail);
 
-  // Avg price
-  const avgPrice = guestDays > 0 ? (hiDaysRented * priceHi + loDaysRented * priceLo) / guestDays : 0;
-  el('val-avg-price').textContent   = fmt(avgPrice, 0) + ' €';
+  const guestDays =
+    hiDaysRented + loDaysRented;
 
-  // ── Day bar (5 Segmente) ──
-  const ghi = Math.min(hiDaysRented, TOTAL_DAYS);
-  const glo = Math.min(loDaysRented, Math.max(0, TOTAL_DAYS - ghi));
-  const w   = Math.min(workDays,     Math.max(0, TOTAL_DAYS - ghi - glo));
-  const o   = Math.min(ownDays,      Math.max(0, TOTAL_DAYS - ghi - glo - w));
-  const e   = Math.max(0, TOTAL_DAYS - ghi - glo - w - o);
+  const ownTotal =
+    workDays + ownDays;
 
-  el('bar-guests-hi').style.width  = (ghi / TOTAL_DAYS * 100) + '%';
-  el('bar-guests-lo').style.width  = (glo / TOTAL_DAYS * 100) + '%';
-  el('bar-workation').style.width  = (w   / TOTAL_DAYS * 100) + '%';
-  el('bar-own').style.width        = (o   / TOTAL_DAYS * 100) + '%';
-  el('bar-empty').style.width      = (e   / TOTAL_DAYS * 100) + '%';
+  const totalUsed =
+    guestDays + ownTotal;
 
-  el('leg-guests-hi').textContent  = ghi;
-  el('leg-guests-lo').textContent  = glo;
-  el('leg-work').textContent       = workDays;
-  el('leg-own').textContent        = ownDays;
-  el('leg-empty').textContent      = e;
+  const overbooked =
+    totalUsed > TOTAL_DAYS;
 
-  // ── Conflict warning ──
-  const warn = el('conflict-warn');
+  const avgQuote =
+    TOTAL_DAYS > 0
+      ? guestDays / TOTAL_DAYS
+      : 0;
+
+  // ─────────────────────────────
+  // UI: HEADER + SLIDER VALUES
+  // ─────────────────────────────
+  const headerKaufpreis =
+    el('header-kaufpreis');
+
+  if (headerKaufpreis) {
+    headerKaufpreis.textContent =
+      fmt(kaufpreis) + ' €';
+  }
+
+  el('val-quote-hi').textContent =
+    Math.round(quoteHi * 100);
+
+  el('val-quote-lo').textContent =
+    Math.round(quoteLo * 100);
+
+  el('val-guest-days-hi').textContent =
+    hiDaysRented;
+
+  el('val-guest-days-lo').textContent =
+    loDaysRented;
+
+  el('val-guest-days').textContent =
+    guestDays;
+
+  el('val-quote').textContent =
+    Math.round(avgQuote * 100);
+
+  el('val-price-hi').textContent =
+    priceHi;
+
+  el('val-price-lo').textContent =
+    priceLo;
+
+  el('val-hi-days').textContent =
+    hiDaysAvail;
+
+  el('val-lo-days').textContent =
+    loDaysAvail + ' Tage';
+
+  el('val-work').textContent =
+    workDays;
+
+  el('val-own').textContent =
+    ownDays;
+
+  el('val-own-total').textContent =
+    ownTotal;
+
+  // Ø Nachtpreis
+  const avgPrice =
+    guestDays > 0
+      ? (
+          hiDaysRented * priceHi +
+          loDaysRented * priceLo
+        ) / guestDays
+      : 0;
+
+  el('val-avg-price').textContent =
+    fmt(avgPrice, 0) + ' €';
+
+  // ─────────────────────────────
+  // DAY BAR
+  // ─────────────────────────────
+  const ghi =
+    Math.min(hiDaysRented, TOTAL_DAYS);
+
+  const glo =
+    Math.min(
+      loDaysRented,
+      Math.max(0, TOTAL_DAYS - ghi)
+    );
+
+  const w =
+    Math.min(
+      workDays,
+      Math.max(0, TOTAL_DAYS - ghi - glo)
+    );
+
+  const o =
+    Math.min(
+      ownDays,
+      Math.max(
+        0,
+        TOTAL_DAYS - ghi - glo - w
+      )
+    );
+
+  const e =
+    Math.max(
+      0,
+      TOTAL_DAYS - ghi - glo - w - o
+    );
+
+  el('bar-guests-hi').style.width =
+    (ghi / TOTAL_DAYS * 100) + '%';
+
+  el('bar-guests-lo').style.width =
+    (glo / TOTAL_DAYS * 100) + '%';
+
+  el('bar-workation').style.width =
+    (w / TOTAL_DAYS * 100) + '%';
+
+  el('bar-own').style.width =
+    (o / TOTAL_DAYS * 100) + '%';
+
+  el('bar-empty').style.width =
+    (e / TOTAL_DAYS * 100) + '%';
+
+  el('leg-guests-hi').textContent =
+    ghi;
+
+  el('leg-guests-lo').textContent =
+    glo;
+
+  el('leg-work').textContent =
+    workDays;
+
+  el('leg-own').textContent =
+    ownDays;
+
+  el('leg-empty').textContent =
+    e;
+
+  // ─────────────────────────────
+  // WARNING
+  // ─────────────────────────────
+  const warn =
+    el('conflict-warn');
+
   if (overbooked) {
-    const over = totalUsed - TOTAL_DAYS;
-    el('conflict-text').textContent = `Belegung übersteigt 365 Tage um ${over} Tage – bitte Schieberegler anpassen.`;
+
+    const over =
+      totalUsed - TOTAL_DAYS;
+
+    el('conflict-text').textContent =
+      `Belegung übersteigt 365 Tage um ${over} Tage – bitte Schieberegler anpassen.`;
+
     warn.classList.add('show');
+
   } else {
     warn.classList.remove('show');
   }
 
-  // ── Financials ──
-  const gross        = hiDaysRented * priceHi + loDaysRented * priceLo;
-  const bookings     = Math.round(guestDays / AVG_STAY);
-  const platformCost = gross * platform;
-  const cleanCost    = bookings * cleaning;
-  const opCosts      = platformCost + cleanCost + fixedCost;
+  // ─────────────────────────────
+  // FINANCIALS
+  // ─────────────────────────────
+  const gross =
+    hiDaysRented * priceHi +
+    loDaysRented * priceLo;
 
-  const zwst = zwstRate * zwstBase;
+  const bookings =
+    Math.round(
+      guestDays / AVG_STAY
+    );
 
-  const darlehen    = KAUFPREIS * finanzPct;
-  const zinsenPA    = darlehen * zinsSatz;
-  const tilgungPA   = darlehen * tilgSatz;
-  const annuitaet   = zinsenPA + tilgungPA;
+  const platformCost =
+    gross * platform;
 
-  const eigenkapital = KAUFPREIS * (1 - finanzPct);
-  const net          = gross - opCosts - zwst - annuitaet;
-  const ekBase       = Math.max(eigenkapital, 1);
-  const yield_pct    = net / ekBase;
-  const amort        = net > 0 ? ekBase / net : Infinity;
+  const cleanCost =
+    bookings * cleaning;
 
-  // ── Zweitwohnsitzsteuer Karte ──
-  el('res-zwst').textContent       = fmtEur(zwst);
+  // Gästeübernachtungen
+  const guestNights =
+    guestDays * avgGuests;
 
-  // ── Tilgung Karte ──
-  el('res-darlehen').textContent   = fmtEur(darlehen);
-  el('res-zinsen').textContent     = fmtEur(zinsenPA);
-  el('res-tilgung-pa').textContent = fmtEur(tilgungPA);
-  el('res-annuitaet').textContent  = fmtEur(annuitaet);
+  // Bergbahnen unlimited
+  const bergbahnCost =
+    280 +
+    (
+      guestNights *
+      bergbahnRate
+    );
 
-  // ── Ergebnis-Karte ──
-  el('res-gross').textContent        = fmt(gross);
-  el('res-guest-days-r').textContent = guestDays;
-  el('res-costs').textContent        = fmt(opCosts);
-  el('res-zwst-r').textContent       = fmt(zwst);
-  el('res-ann-r').textContent        = fmt(annuitaet);
-  el('res-net').textContent          = net >= 0 ? fmt(net) : '−' + fmt(Math.abs(net));
-  el('res-platform').textContent     = fmt(platformCost);
-  el('res-clean').textContent        = fmt(cleanCost);
-  el('res-bookings').textContent     = bookings;
-  el('res-yield').textContent        = fmt(yield_pct * 100, 1) + '%';
-  el('res-amort').textContent        = isFinite(amort) ? fmt(amort, 0) : '∞';
+  const opCosts =
+    platformCost +
+    cleanCost +
+    fixedCost +
+    bergbahnCost;
 
-  // ── Rendite badge color ──
-  const badge = el('rendite-badge');
-  badge.style.removeProperty('background');
-  badge.style.removeProperty('color');
-  if (net < 0) {
-    badge.style.background = 'rgba(214,74,42,0.25)';
-    badge.style.color = '#ff9980';
-  } else if (yield_pct < 0.02) {
-    badge.style.background = 'rgba(201,148,58,0.25)';
-    badge.style.color = '#f0d5a0';
-  } else if (yield_pct < 0.04) {
-    badge.style.background = 'rgba(106,180,200,0.25)';
-    badge.style.color = '#b8dde8';
-  } else {
-    badge.style.background = 'rgba(61,107,84,0.35)';
-    badge.style.color = '#a7f3d0';
+  const zwst =
+    zwstRate * zwstBase;
+
+  const darlehen =
+    kaufpreis * finanzPct;
+
+  const zinsenPA =
+    darlehen * zinsSatz;
+
+  const tilgungPA =
+    darlehen * tilgSatz;
+
+  const annuitaet =
+    zinsenPA +
+    tilgungPA;
+
+  const eigenkapital =
+    kaufpreis *
+    (1 - finanzPct);
+
+  const net =
+    gross -
+    opCosts -
+    zwst -
+    annuitaet;
+
+  const ekBase =
+    Math.max(
+      eigenkapital,
+      1
+    );
+
+  const yield_pct =
+    net / ekBase;
+
+  const amort =
+    net > 0
+      ? ekBase / net
+      : Infinity;
+
+  // ─────────────────────────────
+  // ZWEITWOHNSTEUER
+  // ─────────────────────────────
+  el('res-zwst').textContent =
+    fmtEur(zwst);
+
+  // Bergbahnen
+  if (el('res-bergbahn')) {
+    el('res-bergbahn').textContent =
+      fmtEur(bergbahnCost);
   }
 
-  // ── Net result item color ──
-  const hiItem = document.querySelector('.result-item.highlight');
+  // ─────────────────────────────
+  // FINANZIERUNG
+  // ─────────────────────────────
+  el('res-darlehen').textContent =
+    fmtEur(darlehen);
+
+  el('res-zinsen').textContent =
+    fmtEur(zinsenPA);
+
+  el('res-tilgung-pa').textContent =
+    fmtEur(tilgungPA);
+
+  el('res-annuitaet').textContent =
+    fmtEur(annuitaet);
+
+  // ─────────────────────────────
+  // ERGEBNIS
+  // ─────────────────────────────
+  el('res-gross').textContent =
+    fmt(gross);
+
+  el('res-guest-days-r').textContent =
+    guestDays;
+
+  el('res-costs').textContent =
+    fmt(opCosts);
+
+  el('res-zwst-r').textContent =
+    fmt(zwst);
+
+  el('res-ann-r').textContent =
+    fmt(annuitaet);
+
+  el('res-net').textContent =
+    net >= 0
+      ? fmt(net)
+      : '−' + fmt(Math.abs(net));
+
+  el('res-platform').textContent =
+    fmt(platformCost);
+
+  el('res-clean').textContent =
+    fmt(cleanCost);
+
+  el('res-bookings').textContent =
+    bookings;
+
+  el('res-yield').textContent =
+    fmt(yield_pct * 100, 1) + '%';
+
+  el('res-amort').textContent =
+    isFinite(amort)
+      ? fmt(amort, 0)
+      : '∞';
+
+  if (el('res-bergbahn-r')) {
+    el('res-bergbahn-r').textContent =
+      fmt(bergbahnCost);
+  }
+
+  // ─────────────────────────────
+  // RENDITE BADGE
+  // ─────────────────────────────
+  const badge =
+    el('rendite-badge');
+
+  badge.style.removeProperty(
+    'background'
+  );
+
+  badge.style.removeProperty(
+    'color'
+  );
+
   if (net < 0) {
-    hiItem.style.background  = 'rgba(214,74,42,0.18)';
-    hiItem.style.borderColor = 'rgba(214,74,42,0.35)';
+
+    badge.style.background =
+      'rgba(214,74,42,0.25)';
+
+    badge.style.color =
+      '#ff9980';
+
+  } else if (
+    yield_pct < 0.02
+  ) {
+
+    badge.style.background =
+      'rgba(201,148,58,0.25)';
+
+    badge.style.color =
+      '#f0d5a0';
+
+  } else if (
+    yield_pct < 0.04
+  ) {
+
+    badge.style.background =
+      'rgba(106,180,200,0.25)';
+
+    badge.style.color =
+      '#b8dde8';
+
   } else {
-    hiItem.style.background  = '';
+
+    badge.style.background =
+      'rgba(61,107,84,0.35)';
+
+    badge.style.color =
+      '#a7f3d0';
+  }
+
+  // Highlight negative cashflow
+  const hiItem =
+    document.querySelector(
+      '.result-item.highlight'
+    );
+
+  if (net < 0) {
+
+    hiItem.style.background =
+      'rgba(214,74,42,0.18)';
+
+    hiItem.style.borderColor =
+      'rgba(214,74,42,0.35)';
+
+  } else {
+
+    hiItem.style.background = '';
     hiItem.style.borderColor = '';
   }
 }
 
-function hookSlider(id, colorOn, colorOff) {
+function hookSlider(
+  id,
+  colorOn,
+  colorOff
+) {
   const s = el(id);
+
   function update() {
-    setTrack(s, colorOn, colorOff);
+    setTrack(
+      s,
+      colorOn,
+      colorOff
+    );
+
     calc();
   }
-  s.addEventListener('input', update);
+
+  s.addEventListener(
+    'input',
+    update
+  );
+
   update();
 }
 
-hookSlider('sl-quote-hi', '#3d6b54', '#e0dcd4');
-hookSlider('sl-quote-lo', '#6ab4c8', '#e0dcd4');
-hookSlider('sl-work',     '#6ab4c8', 'rgba(255,255,255,0.18)');
-hookSlider('sl-own',      '#6ab4c8', 'rgba(255,255,255,0.18)');
-hookSlider('sl-price-hi', '#c9943a', '#e0dcd4');
-hookSlider('sl-price-lo', '#c9943a', '#e0dcd4');
-hookSlider('sl-hi-days',  '#c9943a', '#e0dcd4');
+hookSlider(
+  'sl-quote-hi',
+  '#3d6b54',
+  '#e0dcd4'
+);
 
-['inp-platform','inp-cleaning','inp-fixed',
- 'inp-zwst-rate','inp-zwst-base',
- 'inp-finanz-pct','inp-zins','inp-tilgung'].forEach(id => {
-  el(id).addEventListener('input', calc);
+hookSlider(
+  'sl-quote-lo',
+  '#6ab4c8',
+  '#e0dcd4'
+);
+
+hookSlider(
+  'sl-work',
+  '#6ab4c8',
+  'rgba(255,255,255,0.18)'
+);
+
+hookSlider(
+  'sl-own',
+  '#6ab4c8',
+  'rgba(255,255,255,0.18)'
+);
+
+hookSlider(
+  'sl-price-hi',
+  '#c9943a',
+  '#e0dcd4'
+);
+
+hookSlider(
+  'sl-price-lo',
+  '#c9943a',
+  '#e0dcd4'
+);
+
+hookSlider(
+  'sl-hi-days',
+  '#c9943a',
+  '#e0dcd4'
+);
+
+[
+  'inp-kaufpreis',
+  'inp-platform',
+  'inp-cleaning',
+  'inp-fixed',
+  'inp-bergbahn-rate',
+  'inp-avg-guests',
+  'inp-zwst-rate',
+  'inp-zwst-base',
+  'inp-finanz-pct',
+  'inp-zins',
+  'inp-tilgung'
+].forEach(id => {
+
+  const element = el(id);
+
+  if (element) {
+    element.addEventListener(
+      'input',
+      calc
+    );
+  }
 });
 
 calc();
